@@ -123,7 +123,7 @@ class MockLVM:
         self.mount_points.clear()
 
 
-class TestCinderlvmCharm(test_utils.PatchHelper):
+class TestCinderLVMCharm(test_utils.PatchHelper):
 
     @classmethod
     def setUpClass(cls):
