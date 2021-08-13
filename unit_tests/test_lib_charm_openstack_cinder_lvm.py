@@ -25,6 +25,10 @@ class MockDevice:
         kwargs.setdefault('size', 0)
         self.attrs = kwargs
 
+    @property
+    def size(self):
+        return self.attrs['size']
+
     def is_block(self):
         return self.attrs.get('block', False)
 
@@ -82,7 +86,9 @@ class MockLVM:
                 return dev
 
     def add_device(self, device, **kwargs):
-        self.devices.append(MockDevice(device, **kwargs))
+        dev = MockDevice(device, **kwargs)
+        self.devices.append(dev)
+        return dev
 
     def is_block_device(self, path):
         dev = self.find_device(path)
@@ -95,6 +101,7 @@ class MockLVM:
             dev.attrs['loop'] = True
         else:
             self.devices.append(MockDevice(path, loop=True, size=size))
+        return dev.path
 
     def is_device_mounted(self, path):
         return any(x.path == path for x in self.mount_points.values())
@@ -104,8 +111,7 @@ class MockLVM:
         if dev is not None:
             self.attrs.update(kwargs)
         else:
-            dev = MockDevice(device, **kwargs)
-        self.mount_points[path] = dev
+            self.mount_points[path] = self.add_device(device, **kwargs)
 
     def has_partition_table(self, device):
         dev = self.find_device(device)
@@ -215,4 +221,15 @@ class TestCinderlvmCharm(test_utils.PatchHelper):
         charm = self._patch_config_and_charm({})
         charm.cinder_configuration()
         cinder_lvm.is_device_mounted.assert_called()
+        cinder_lvm.zap_disk.assert_called()
         self.assertTrue(self.LVM.exists(cinder_lvm.get_volume_group_name()))
+
+    def test_cinder_lvm_loopback_dev(self):
+        loop_dev = '/sys/loop0'
+        self.LVM.add_device(loop_dev, loop=True)
+        charm = self._patch_config_and_charm({'block-device': loop_dev + '|100'})
+        charm.cinder_configuration()
+
+        dev = self.LVM.find_device(loop_dev)
+        self.assertTrue(dev)
+        self.assertEqual(dev.size, '100')
