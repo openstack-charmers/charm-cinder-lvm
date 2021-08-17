@@ -182,6 +182,7 @@ class TestCinderlvmCharm(test_utils.PatchHelper):
         cinder_lvm.extend_lvm_volume_group.side_effect = lvm.extend
 
     def tearDown(self):
+        super().tearDown()
         self.LVM.reset()
 
     def _patch_config_and_charm(self, config):
@@ -227,7 +228,8 @@ class TestCinderlvmCharm(test_utils.PatchHelper):
     def test_cinder_lvm_loopback_dev(self):
         loop_dev = '/sys/loop0'
         self.LVM.add_device(loop_dev, loop=True)
-        charm = self._patch_config_and_charm({'block-device': loop_dev + '|100'})
+        charm = self._patch_config_and_charm(
+            {'block-device': loop_dev + '|100'})
         charm.cinder_configuration()
 
         dev = self.LVM.find_device(loop_dev)
