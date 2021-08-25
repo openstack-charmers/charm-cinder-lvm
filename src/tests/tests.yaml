@@ -1,9 +1,9 @@
 charm_name: cinder-lvm
 tests:
-  - tests.tests_cinder_lvm.CinderlvmTest
+  - tests.tests_cinder_lvm.CinderLVMTest
 configure:
   - zaza.openstack.charm_tests.keystone.setup.add_demo_user
 gate_bundles:
-  - xenial-ocata
+  - bionic-train
 smoke_bundles:
-  - xenial-ocata
+  - bionic-train
