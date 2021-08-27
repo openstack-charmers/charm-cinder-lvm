@@ -46,6 +46,7 @@ from charmhelpers.contrib.storage.linux.lvm import (
     is_lvm_physical_volume,
     list_lvm_volume_group,
     list_thin_logical_volume_pools,
+    remove_lvm_physical_volume,
 )
 
 
