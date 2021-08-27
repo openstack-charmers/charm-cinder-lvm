@@ -27,16 +27,19 @@ import zaza.openstack.utilities.openstack as openstack_utils
 def with_conf(key, value):
     def patched(f):
         def inner(*args, **kwargs):
-            prev = openstack_utils.get_application_config_option('cinder-lvm', key)
+            prev = openstack_utils.get_application_config_option(
+                'cinder-lvm', key)
             try:
                 zaza.model.set_application_config('cinder-lvm', {key: value})
                 zaza.model.wait_for_agent_status(model_name=None)
                 return f(*args, **kwargs)
             finally:
-                zaza.model.set_application_config('cinder-lvm', {key: str(prev)})
+                zaza.model.set_application_config(
+                    'cinder-lvm', {key: str(prev)})
                 zaza.model.wait_for_agent_status(model_name=None)
         return inner
     return patched
+
 
 class CinderLVMTest(test_utils.OpenStackBaseTest):
     """Encapsulate cinder-lvm tests."""
@@ -64,12 +67,12 @@ class CinderLVMTest(test_utils.OpenStackBaseTest):
         logging.info('cinder-lvm')
         expected_contents = {
             'LVM-zaza-lvm': {
-              'volume_clear': ['zero'],
-              'volumes_dir': ['/var/lib/cinder/volumes'],
-              'volume_name_template': ['volume-%s'],
-              'volume_clear_size': ['0'],
-              'volume_driver': ['cinder.volume.drivers.lvm.LVMVolumeDriver'],
-              } }
+                'volume_clear': ['zero'],
+                'volumes_dir': ['/var/lib/cinder/volumes'],
+                'volume_name_template': ['volume-%s'],
+                'volume_clear_size': ['0'],
+                'volume_driver': ['cinder.volume.drivers.lvm.LVMVolumeDriver'],
+            }}
 
         zaza.model.run_on_leader(
             'cinder',
@@ -82,7 +85,7 @@ class CinderLVMTest(test_utils.OpenStackBaseTest):
             model_name=self.model_name,
             timeout=10)
 
-    def _tst_create_volume(self):
+    def _create_volume(self):
         test_vol_name = "zaza{}".format(uuid.uuid1().fields[0])
         vol_new = self.cinder_client.volumes.create(
             name=test_vol_name,
@@ -97,7 +100,7 @@ class CinderLVMTest(test_utils.OpenStackBaseTest):
         return self.cinder_client.volumes.find(name=test_vol_name)
 
     def test_create_volume(self):
-        test_vol = self._tst_create_volume()
+        test_vol = self._create_volume()
         self.assertTrue(test_vol)
 
         host = getattr(test_vol, 'os-vol-host-attr:host').split('#')[0]
@@ -106,16 +109,16 @@ class CinderLVMTest(test_utils.OpenStackBaseTest):
     @with_conf('overwrite', 'true')
     @with_conf('block-device', '/dev/vdc')
     def test_volume_overwrite(self):
-        self._tst_create_volume()
+        self._create_volume()
 
     @with_conf('block-device', 'none')
     def test_device_none(self):
-        self._tst_create_volume()
+        self._create_volume()
 
     @with_conf('remove-missing', 'true')
     def test_remove_missing_volume(self):
-        self._tst_create_volume()
+        self._create_volume()
 
     @with_conf('remove-missing-force', 'true')
     def test_remove_missing_force(self):
-        self._tst_create_volume()
+        self._create_volume()

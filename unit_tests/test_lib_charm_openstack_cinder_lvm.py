@@ -16,8 +16,6 @@ import charmhelpers
 import charm.openstack.cinder_lvm as cinder_lvm
 import charms_openstack.test_utils as test_utils
 
-NIL = object()
-
 
 class MockDevice:
     def __init__(self, path, **kwargs):
@@ -137,8 +135,8 @@ class TestCinderLVMCharm(test_utils.PatchHelper):
         self._config = self.DFL_CONFIG.copy()
         lvm = self.LVM
 
-        def cf(key=NIL):
-            if key is NIL:
+        def cf(key=None):
+            if key is None:
                 return self._config
             return self._config.get(key)
 
@@ -231,7 +229,6 @@ class TestCinderLVMCharm(test_utils.PatchHelper):
         charm = self._patch_config_and_charm(
             {'block-device': loop_dev + '|100'})
         charm.cinder_configuration()
-
         dev = self.LVM.find_device(loop_dev)
         self.assertTrue(dev)
         self.assertEqual(dev.size, '100')

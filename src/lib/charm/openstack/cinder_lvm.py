@@ -100,7 +100,7 @@ def configure_lvm_storage(block_devices, volume_group, overwrite=False,
                           remove_missing=False, remove_missing_force=False):
     ''' Configure LVM storage on the list of block devices provided
 
-    :param block_devices: list: List of whitelisted block devices to detect
+    :param block_devices: list: List of allow-listed block devices to detect
                                 and use if found
     :param overwrite: bool: Scrub any existing block data if block device is
                             not already in-use
@@ -301,8 +301,7 @@ def clean_storage(block_device):
 
     if is_lvm_physical_volume(block_device):
         deactivate_lvm_volume_group(block_device)
-        subprocess.Popen(['pvremove', '-ff', block_device],
-            stdin=subprocess.PIPE).communicate(b'y\n')
+        remove_lvm_physical_volume(block_device)
 
     zap_disk(block_device)
 
@@ -342,7 +341,7 @@ class CinderLVMCharm(
 
     name = 'cinder_lvm'
     release = 'ocata'
-    packages = ['cinder-volume']
+    packages = []
     release_pkg = 'cinder-common'
     version_package = 'cinder-volume'
     stateless = True
