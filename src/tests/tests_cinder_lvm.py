@@ -24,19 +24,23 @@ import zaza.openstack.charm_tests.test_utils as test_utils
 import zaza.openstack.utilities.openstack as openstack_utils
 
 
-def with_conf(key, value):
+def with_conf(application, config, model_name=None):
+    prev = {}
+    for key in config.keys():
+        prev[key] = str(openstack_utils.get_application_config_option(
+            application, key, model_name=model_name))
+
     def patched(f):
         def inner(*args, **kwargs):
-            prev = openstack_utils.get_application_config_option(
-                'cinder-lvm', key)
             try:
-                zaza.model.set_application_config('cinder-lvm', {key: value})
-                zaza.model.wait_for_agent_status(model_name=None)
+                zaza.model.set_application_config(
+                    application, config, model_name=model_name)
+                zaza.model.wait_for_agent_status(model_name=model_name)
                 return f(*args, **kwargs)
             finally:
                 zaza.model.set_application_config(
-                    'cinder-lvm', {key: str(prev)})
-                zaza.model.wait_for_agent_status(model_name=None)
+                    application, prev, model_name=model_name)
+                zaza.model.wait_for_agent_status(model_name=model_name)
         return inner
     return patched
 
@@ -106,19 +110,18 @@ class CinderLVMTest(test_utils.OpenStackBaseTest):
         host = getattr(test_vol, 'os-vol-host-attr:host').split('#')[0]
         self.assertTrue(host.startswith('cinder@LVM'))
 
-    @with_conf('overwrite', 'true')
-    @with_conf('block-device', '/dev/vdc')
+    @with_conf('cinder-lvm', {'overwrite': 'true', 'block-device': '/dev/vdc'})
     def test_volume_overwrite(self):
         self._create_volume()
 
-    @with_conf('block-device', 'none')
+    @with_conf('cinder-lvm', {'block-device': 'none'})
     def test_device_none(self):
         self._create_volume()
 
-    @with_conf('remove-missing', 'true')
+    @with_conf('cinder-lvm', {'remove-missing': 'true'})
     def test_remove_missing_volume(self):
         self._create_volume()
 
-    @with_conf('remove-missing-force', 'true')
+    @with_conf('cinder-lvm', {'remove-missing-force': 'true'})
     def test_remove_missing_force(self):
         self._create_volume()
