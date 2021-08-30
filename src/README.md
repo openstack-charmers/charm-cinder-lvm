@@ -1,140 +1,115 @@
-lvm Storage Backend for Cinder
--------------------------------
+# Overview
 
-Overview
-========
+Cinder-lvm is a charm that works as a subordinate for the cinder charm, implementing the LVM backend.
 
-This charm provides a lvm storage backend for use with the Cinder
-charm. It is intended to be used as a subordinate to main cinder charm.
+# Usage
 
-To use:
+## Configuration
 
-    juju deploy cinder
-    juju deploy cinder-lvm
-    juju add-relation cinder-lvm cinder
+This section covers common and/or important configuration options. See file `config.yaml` for the full list of options, along with their descriptions and default values. See the [Juju documentation][juju-docs-config-apps] for details on configuring applications.
 
-It will prepare the devices (format) and then will talk to main cinder
-charm to pass on configuration which cinde charm will inject into it's
-own configuration file. After that, it does nothing except watch for
-config changes and reconfig cinder.
+#### `alias`
 
-The configuration is passed over to cinder using a juju relation.
-Although cinder has a few different services, it is the cinder-volume
-service that will make use of the configuration added.
+An alias given to the storage pool. This alias will be used to derive the volume-group name and the backend name, and is used
+to differentiate volume groups and backend names if multiple instances are deployed for the charm on the same host.
+      .
+When deploying one instance, this name does not matter and "default" is probably ok. But when deploying multiple instances,
+a more meaningful name should be used (e.g: "pool1", "pool2", "fast", "slow", etc).
 
-Note: The devices must be local to the cinder-volume, so you will
-probably want to deploy this service on the compute hosts, since the
-cinder-volume that will be running on the controller nodes will not
-have access to any physical device (it is normally deployed in lxd).
+#### `allocation-type`
 
-A more complete example, using a bundle would be the folowing.
+Either 'thin' or 'thick'; specifies the model when allocating logical volumes. Defaults to 'thick'.
 
-Your normal cinder deployed to controllers, will all services running:
+### `block-device`
 
-    hacluster-cinder:
-      charm: cs:hacluster
-    cinder:
-      charm: cs:cinder
-      num_units: 3
-      constraints: *combi-access-constr
-      bindings:
-        "": *oam-space
-        public: *public-space
-        admin: *admin-space
-        internal: *internal-space
-        shared-db: *internal-space
-      options:
-        worker-multiplier: *worker-multiplier
-        openstack-origin: *openstack-origin
-        block-device: None
-        glance-api-version: 2
-        vip: *cinder-vip
-        use-internal-endpoints: True
-        region: *openstack-region
-      to:
-      - lxd:1003
-      - lxd:1004
-      - lxd:1005
+The block devices on which to create an LVM volume group. This is a mandatory option and leaving it blank will cause an error.
+This can be a space-separated list of block devices to attempt to use in the cinder lvm volume group. Each block device detected
+will be added to the available physical volumes in the volume group.
 
-Extra cinder-volume only services running on compute-nodes (basically the same as above but with "enabled-services: volume"). Take care to leave "block-device: None" because we do not want to use internal lvm functionality from the cinder charm, and will instead make the cinder-lvm charm do that:
+Formatting as a physical volume will fail if the device is already formatted and may potentially have data, unless the 'overwrite'
+option is set to true.
 
-    cinder-volume:
-      charm: cs:cinder
-      num_units: 9
-      constraints: *combi-access-constr
-      bindings:
-        "": *oam-space
-        public: *public-space
-        admin: *admin-space
-        internal: *internal-space
-        shared-db: *internal-space
-      options:
-        worker-multiplier: *worker-multiplier
-        openstack-origin: *openstack-origin
-        enabled-services: volume
-        block-device: None
-        glance-api-version: 2
-        use-internal-endpoints: True
-        region: *openstack-region
-      to:
-      - 1000
-      - 1001
-      - 1002
-      - 1003
-      - 1004
-      - 1005
-      - 1006
-      - 1007
-      - 1008
+May be set to the path and size of a local file (/path/to/file|$sizeG), which will be created and used as a
+loopback device (should only be used for testing purposes). $sizeG defaults to 5G.
 
-And then the cinder-lvm charm (as a subordinate charm):
+### `config-flags`
 
-    cinder-lvm-fast:
-      charm: cs:cinder-lvm
-      num_units: 0
-      options:
-        alias: fast
-        block-device: /dev/nvme0n1
-        allocation-type: default
-        erase-size: '50'
-        unique-backend: true
-    cinder-lvm-slow:
-      charm: cs:cinder-lvm
-      num_units: 0
-      options:
-        alias: slow
-        block-device: /dev/sdb /dev/sdc /dev/sdd
-        allocation-type: default
-        erase-size: '50'
-        unique-backend: true
+Comma-separated list of key=value config flags. These values will be added to standard options when injecting config into `cinder.conf`.
 
-And then the extra relations for cinder-volume and cinder-lvm-[foo]:
+### `ephemeral-unmount`
 
-    - [ cinder-volume, mysql ]
-    - [ "cinder-volume:amqp", "rabbitmq-server:amqp" ]
-    - [ "cinder-lvm-fast", "cinder-volume" ]
-    - [ "cinder-lvm-slow", "cinder-volume" ]
+Cloud instances provide ephemeral storage which is normally mounted on /mnt.
 
+Providing this option will force an unmount of the ephemeral device so that it can be used as a Cinder storage device. This is useful for
+testing purposes (cloud deployment is not a typical use case).
 
-Configuration
-=============
+You need to pass the mount point to be unmounted, if blank (or invalid) it will be ignored.
 
-See config.yaml for details of configuration options.
+### `overwrite`
 
-One or more block devices (local to the charm unit) are used as an LVM
-physical volumes, on which a volume group is created. A logical volume
-is created ('openstack volume create') and exported to a cloud instance
-via iSCSI ('openstack server add volume').
+If true, the charm will attempt to overwrite block devices containing previous filesystems or LVM, assuming it is not in use.
 
-**Note**: It is not recommended to use the LVM storage method for
-anything other than testing or for small non-production deployments.
+### `remove-missing`
 
-**Important** Make sure the designated block devices exist and are not
-in use (formatted as physical volumes or other filesystems), unless they
-already have the desired volume group (in which case it will be used
-instead of creating a new one).
+If true, the charm will attempt to remove missing physical volumes from the volume group, if logical volumes are not allocated on top of them.
 
-This charm only prepares devices for lvm and configures cinder and do
-not execute any active function, therefore there is not need for
-high-availability.
+### `remove-missing-force`
+
+If true, the charm will attempt to remove missing physical volumes from the volume group, even when logical volumes are allocated on top of them.
+This option overrides 'remove-missing' when set.
+
+### `unique-backend`
+
+Normally all backends that this charm configure are going to register themselves with Cinder using the same backend name (the
+name of the volume group), allowing Cinder to use them as a cluster and schedule volume creation to any of the nodes that pass
+cinder filter selection. Set this to True to make each host register with a unique name (volume-group name + hostname)
+so that each host can be individually addressable in cinder backend list.
+
+## Deployment
+
+Because this is a subordinate charm a relation will need to be added to the 'cinder' charm
+application to have the charm deployed on a machine.
+
+## Cinder-lvm as a backend for Cinder
+
+This charm's primary use is as a backend for the cinder charm. To do so, add a relation betweeen both charms:
+
+  juju add-relation cinder-lvm cinder
+
+## Actions
+
+This section lists Juju [actions][juju-docs-actions] supported by the charm. Actions allow specific operations to be performed on a per-unit basis. To display action descriptions run `juju actions --schema cinder-lvm`. If the charm is not deployed then see file `actions.yaml`.
+
+* `pause`
+
+Pause the services. If the deployment is clustered using the hacluster charm, the corresponding hacluster unit on the node must first be paused
+as well (Not doing so may lead to an interruption of service).
+
+* `resume`
+
+Resume services. If the deployment is clustered using the hacluster charm, the corresponding hacluster unit on the node must be resumed as well.
+
+* `restart-services`
+
+Restart the services the charm manages.
+
+# Documentation
+
+The OpenStack Charms project maintains two documentation guides:
+
+* [OpenStack Charm Guide][cg]: for project information, including development
+  and support notes
+* [OpenStack Charms Deployment Guide][cdg]: for charm usage information
+
+# Bugs
+
+Please report bugs on [Launchpad][lp-bugs-charm-cinder-lvm].
+
+<!-- LINKS -->
+
+[hacluster-charm]: https://jaas.ai/hacluster
+[cg]: https://docs.openstack.org/charm-guide
+[cdg]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide
+[cdg-app-policy-overrides]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-policy-overrides.html
+[lp-bugs-charm-cinder-lvm]: https://bugs.launchpad.net/charm-cinder-lvm/+filebug
 
