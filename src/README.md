@@ -1,6 +1,6 @@
 # Overview
 
-Cinder-lvm is a charm that works as a subordinate for the cinder charm, implementing the LVM backend.
+The cinder charm is the Openstack block storage (i.e: Volume) service, whereas the cinder-lvm charm works as a subordinate of cinder, implementing a backend based on the Linux Volume Manager (LVM).
 
 # Usage
 
@@ -67,31 +67,17 @@ so that each host can be individually addressable in cinder backend list.
 
 ## Deployment
 
-Because this is a subordinate charm a relation will need to be added to the 'cinder' charm
-application to have the charm deployed on a machine.
-
-## Cinder-lvm as a backend for Cinder
-
 This charm's primary use is as a backend for the cinder charm. To do so, add a relation betweeen both charms:
 
-  juju add-relation cinder-lvm cinder
+  juju add-relation cinder-lvm:storage-backend cinder:storage-backend
 
 ## Actions
 
 This section lists Juju [actions][juju-docs-actions] supported by the charm. Actions allow specific operations to be performed on a per-unit basis. To display action descriptions run `juju actions --schema cinder-lvm`. If the charm is not deployed then see file `actions.yaml`.
 
 * `pause`
-
-Pause the services. If the deployment is clustered using the hacluster charm, the corresponding hacluster unit on the node must first be paused
-as well (Not doing so may lead to an interruption of service).
-
 * `resume`
-
-Resume services. If the deployment is clustered using the hacluster charm, the corresponding hacluster unit on the node must be resumed as well.
-
 * `restart-services`
-
-Restart the services the charm manages.
 
 # Documentation
 
@@ -105,11 +91,7 @@ The OpenStack Charms project maintains two documentation guides:
 
 Please report bugs on [Launchpad][lp-bugs-charm-cinder-lvm].
 
-<!-- LINKS -->
-
-[hacluster-charm]: https://jaas.ai/hacluster
 [cg]: https://docs.openstack.org/charm-guide
 [cdg]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide
-[cdg-app-policy-overrides]: https://docs.openstack.org/project-deploy-guide/charm-deployment-guide/latest/app-policy-overrides.html
 [lp-bugs-charm-cinder-lvm]: https://bugs.launchpad.net/charm-cinder-lvm/+filebug
 
