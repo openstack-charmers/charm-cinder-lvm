@@ -175,7 +175,8 @@ class TestCinderLVMCharm(test_utils.PatchHelper):
         cinder_lvm.filesystem_mounted.side_effect = lvm.fs_mounted
         cinder_lvm.lvm_volume_group_exists.side_effect = lvm.exists
         cinder_lvm.remove_lvm_volume_group.side_effect = lvm.remove
-        cinder_lvm.ensure_lvm_volume_group_non_existent.side_effect = lvm.ensure_non_existent
+        cinder_lvm.ensure_lvm_volume_group_non_existent.side_effect = \
+            lvm.ensure_non_existent
         cinder_lvm.has_partition_table.side_effect = lvm.has_partition_table
         cinder_lvm.extend_lvm_volume_group.side_effect = lvm.extend
 
