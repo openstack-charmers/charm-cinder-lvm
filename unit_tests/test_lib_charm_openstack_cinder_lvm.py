@@ -125,14 +125,14 @@ class TestCinderLVMCharm(test_utils.PatchHelper):
 
     @classmethod
     def setUpClass(cls):
-        cls.DFL_CONFIG = {'block-device': '/dev/sdb', 'overwrite': False,
-                          'remove-missing': False, 'alias': 'test-alias',
-                          'remove-missing-force': False}
+        cls.DEFAULT_CONFIG = {'overwrite': False,
+                              'remove-missing': False, 'alias': 'test-alias',
+                              'remove-missing-force': False}
         cls.LVM = MockLVM()
 
     def setUp(self):
         super().setUp()
-        self._config = self.DFL_CONFIG.copy()
+        self._config = self.DEFAULT_CONFIG.copy()
         lvm = self.LVM
 
         def cf(key=None):

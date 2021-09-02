@@ -341,7 +341,7 @@ class CinderLVMCharm(
         charms_openstack.charm.CinderStoragePluginCharm):
 
     name = 'cinder_lvm'
-    release = 'ocata'
+    release = 'queens'
     packages = []
     release_pkg = 'cinder-common'
     version_package = 'cinder-volume'

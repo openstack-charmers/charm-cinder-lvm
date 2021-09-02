@@ -2,6 +2,8 @@
 
 The cinder charm is the Openstack block storage (i.e: Volume) service, whereas the cinder-lvm charm works as a subordinate of cinder, implementing a backend based on the Linux Volume Manager (LVM).
 
+> **Note**: The cinder-lvm charm is supported starting with Openstack Queens.
+
 # Usage
 
 ## Configuration
