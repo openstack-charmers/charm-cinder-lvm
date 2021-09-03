@@ -179,6 +179,7 @@ class TestCinderLVMCharm(test_utils.PatchHelper):
             lvm.ensure_non_existent
         cinder_lvm.has_partition_table.side_effect = lvm.has_partition_table
         cinder_lvm.extend_lvm_volume_group.side_effect = lvm.extend
+        self._config['block-device'] = '/dev/sdb'
 
     def tearDown(self):
         super().tearDown()
@@ -192,7 +193,7 @@ class TestCinderLVMCharm(test_utils.PatchHelper):
         charm = self._patch_config_and_charm({})
         self.assertEqual(charm.name, 'cinder_lvm')
         self.assertEqual(charm.version_package, 'cinder-volume')
-        self.assertEqual(charm.packages, ['cinder-volume'])
+        self.assertEqual(charm.packages, [])
 
     def test_cinder_configuration(self):
         charm = self._patch_config_and_charm(
