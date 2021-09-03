@@ -1,4 +1,4 @@
-name: charm-cinder-lvm
+name: cinder-lvm
 summary: lvm integration for OpenStack Block Storage
 maintainer: OpenStack Charmers <openstack-charmers@lists.ubuntu.com>
 description: |
