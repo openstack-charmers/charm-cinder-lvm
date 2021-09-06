@@ -1,6 +1,7 @@
 charm_name: cinder-lvm
 tests:
-  - tests.tests_cinder_lvm.CinderLVMTest
+  - zaza.openstack.charm_tests.cinder.tests.CinderTests
+  - zaza.openstack.charm_tests.cinder_lvm.CinderLVMTest
 configure:
   - zaza.openstack.charm_tests.keystone.setup.add_demo_user
 gate_bundles:
@@ -11,7 +12,6 @@ gate_bundles:
   - bionic-ussuri
   - focal-ussuri
   - focal-victoria
-  - focal-wallaby
   - groovy-victoria
   - hirsute-wallaby
 smoke_bundles:
@@ -22,6 +22,5 @@ smoke_bundles:
   - bionic-ussuri
   - focal-ussuri
   - focal-victoria
-  - focal-wallaby
   - groovy-victoria
   - hirsute-wallaby
